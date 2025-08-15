@@ -1,6 +1,6 @@
 # LinkedIn Scraper
 
-A comprehensive LinkedIn scraping toolkit with profile extraction, job search, skill matching, and Excel export capabilities.
+A comprehensive, standalone LinkedIn scraping toolkit with profile extraction, job search, skill matching, and Excel export capabilities.
 
 ## Features
 
@@ -8,32 +8,26 @@ A comprehensive LinkedIn scraping toolkit with profile extraction, job search, s
 - LinkedIn profile scraping with anti-detection measures
 - Skill matching and scoring
 - Excel export with detailed profile information
-- AI-powered profile analysis
+- Automated profile data extraction
 
 ### Job Search
 - LinkedIn job listing scraping
 - Advanced search filters (skills, location, experience level, job type)
 - Job details extraction
-- REST API endpoints for job search
+- Interactive command-line interface
 
-### Command Line Interface
-- CLI for job searching
-- Profile scraping automation
+### Data Processing
+- Skill matching algorithms
+- Excel export functionality
+- Data validation and cleaning
 - Batch processing capabilities
 
 ## Project Structure
 
 ```
-linkedin-scraper/
-├── linkedin_profile_scraper.py    # Main profile scraping functionality
-├── linkedin_cli.py                # Command-line interface
-├── linkedin_demo.py               # Demo script
-├── linkedin_scraper.py            # Job scraping service (from backend)
-├── linkedin.py                    # Pydantic schemas (from backend)
-├── endpoints/linkedin.py          # FastAPI endpoints (from backend)
-├── test_linkedin_scraper.py       # Profile scraper tests
-├── test_linkedin_agent.py         # AI agent tests
-├── test_linkedin.py               # Job scraper tests (from backend)
+LinkedinScraper/
+├── linkedin_scraper.py            # Main scraper (consolidated functionality)
+├── test_job_search.py             # Job search test script
 ├── requirements.txt               # Dependencies
 ├── setup.sh                       # Setup script
 ├── README.md                      # This file
@@ -44,10 +38,10 @@ linkedin-scraper/
 
 ## Installation
 
-1. Create a virtual environment:
+1. Clone the repository:
 ```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+git clone <repository-url>
+cd LinkedinScraper
 ```
 
 2. Install dependencies:
@@ -55,99 +49,181 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-3. Set up environment variables:
+3. Set up environment variables (optional):
 ```bash
 cp .env.example .env
-# Edit .env with your LinkedIn credentials and API keys
+# Edit .env with your LinkedIn credentials
 ```
 
 ## Usage
 
-### Profile Scraping
+### Interactive Mode
+Run the main scraper for an interactive experience:
 ```bash
-python linkedin_profile_scraper.py
+python3 linkedin_scraper.py
 ```
 
-### Job Search (CLI)
-```bash
-python linkedin_cli.py -s "Python,JavaScript" -l "San Francisco"
+Choose from:
+- **Option 1**: Search for jobs
+- **Option 2**: Scrape profiles
+
+### Programmatic Usage
+
+#### Job Search
+```python
+from linkedin_scraper import LinkedInScraper, JobSearchRequest
+
+# Create scraper instance
+scraper = LinkedInScraper(headless=True)
+
+# Create search request
+request = JobSearchRequest(
+    skills=["Python", "JavaScript"],
+    location="San Francisco, CA",
+    limit=10
+)
+
+# Search for jobs
+result = scraper.search_jobs(request)
+
+if result.success:
+    for job in result.jobs:
+        print(f"{job.title} at {job.company}")
 ```
 
-### Job Search (API)
-```bash
-# Start the FastAPI server
-uvicorn linkedin_scraper:app --reload
+#### Profile Scraping
+```python
+from linkedin_scraper import LinkedInScraper
 
-# Use the API endpoints
-curl -X POST "http://localhost:8000/linkedin/search" \
-  -H "Content-Type: application/json" \
-  -d '{"skills": ["Python", "JavaScript"], "location": "San Francisco"}'
+# Create scraper instance
+scraper = LinkedInScraper(headless=True)
+
+# Scrape a profile
+profile_url = "https://linkedin.com/in/username"
+profile = scraper.scrape_profile(profile_url)
+
+if profile:
+    print(f"Name: {profile.name}")
+    print(f"Skills: {profile.skills}")
+    print(f"Match Score: {profile.skill_match_score}%")
 ```
 
-### Demo
+### Test Scripts
+Run the job search test:
 ```bash
-python linkedin_demo.py
+python3 test_job_search.py
 ```
 
 ## Configuration
 
-Create a `.env` file with the following variables:
+### Environment Variables
+Create a `.env` file with the following variables (optional):
 ```
 LINKEDIN_EMAIL=your_email@example.com
 LINKEDIN_PASSWORD=your_password
-OPENAI_API_KEY=your_openai_key
-ANTHROPIC_API_KEY=your_anthropic_key
 ```
 
-## API Endpoints
+### Customizing Target Skills
+Modify the `target_skills` list in the `LinkedInScraper` class:
+```python
+scraper = LinkedInScraper()
+scraper.target_skills = [
+    'Python', 'JavaScript', 'React', 'Node.js',
+    'AWS', 'Docker', 'Kubernetes', 'Machine Learning'
+]
+```
+
+## Features
 
 ### Job Search
-- `POST /linkedin/search` - Search for jobs
-- `GET /linkedin/status` - Get scraping status
-- `GET /linkedin/help` - Get API documentation
+- **Skills-based filtering**: Search by specific skills
+- **Location filtering**: Filter by city, state, or country
+- **Experience level**: Entry-level, mid-senior, director, etc.
+- **Job type**: Full-time, part-time, contract, etc.
+- **Company filtering**: Search within specific companies
+- **Result limiting**: Control number of results returned
 
 ### Profile Scraping
-- Use the `linkedin_profile_scraper.py` script directly
-- Supports batch processing and Excel export
+- **Comprehensive data extraction**: Name, headline, location, experience
+- **Skill matching**: Automatic skill comparison and scoring
+- **Education extraction**: Academic background
+- **Contact information**: Email and profile URLs
+- **Excel export**: Export data to spreadsheet format
+
+### Anti-Detection Measures
+- **Headless browser support**: Run without GUI
+- **User agent spoofing**: Mimic real browser behavior
+- **Request delays**: Prevent rate limiting
+- **Session management**: Handle login and cookies
+
+## Dependencies
+
+### Core Dependencies
+- `selenium>=4.15.0` - Web automation
+- `beautifulsoup4>=4.12.0` - HTML parsing
+- `pandas>=2.0.0` - Data processing and Excel export
+- `openpyxl>=3.1.0` - Excel file handling
+
+### Optional Dependencies
+- `openai>=1.3.0` - AI-powered analysis (future feature)
+- `anthropic>=0.7.0` - Alternative AI provider (future feature)
 
 ## Testing
 
-Run all tests:
-```bash
-pytest
-```
-
-Run specific test files:
-```bash
-pytest test_linkedin_scraper.py
-pytest test_linkedin_agent.py
-pytest test_linkedin.py
-```
+The project includes comprehensive test scripts:
+- `test_job_search.py` - Tests job search functionality
+- Built-in validation for data models
 
 ## Development
 
-### Code Formatting
-```bash
-black .
-isort .
-flake8 .
-```
+### Code Quality
+- Type hints throughout
+- Comprehensive error handling
+- Logging for debugging
+- Clean, maintainable code structure
 
-### Running Tests
-```bash
-pytest --cov=. --cov-report=html
-```
+### Extending the Scraper
+The modular design makes it easy to add new features:
+- Add new data extraction methods
+- Implement additional search filters
+- Create new export formats
+- Add AI-powered analysis
 
-## Migration from Pravis Boutique
+## Troubleshooting
 
-This project was extracted from the main Pravis Boutique backend and includes:
+### Common Issues
 
-- **Profile Scraper**: Original LinkedIn profile scraping functionality
-- **Job Scraper**: FastAPI service for job search (moved from backend)
-- **API Endpoints**: REST API for job search (moved from backend)
-- **Schemas**: Pydantic models for data validation (moved from backend)
-- **Tests**: Comprehensive test suite for all functionality
+1. **ChromeDriver not found**
+   - Install Chrome browser
+   - Download ChromeDriver from https://chromedriver.chromium.org/
+
+2. **LinkedIn blocking requests**
+   - Use headless mode: `scraper = LinkedInScraper(headless=True)`
+   - Add delays between requests
+   - Use valid LinkedIn credentials
+
+3. **Import errors**
+   - Install all dependencies: `pip install -r requirements.txt`
+   - Check Python version (3.9+ recommended)
+
+### Performance Tips
+- Use headless mode for faster execution
+- Limit result counts to reduce processing time
+- Add appropriate delays between requests
+- Use specific skill filters to narrow results
 
 ## License
 
-This project is part of the Pravis Boutique ecosystem.
+This project is independent and open source. Use responsibly and in accordance with LinkedIn's terms of service.
+
+## Contributing
+
+Contributions are welcome! Please:
+1. Fork the repository
+2. Create a feature branch
+3. Add tests for new functionality
+4. Submit a pull request
+
+## Disclaimer
+
+This tool is for educational and research purposes. Please respect LinkedIn's terms of service and robots.txt file. Use responsibly and ethically.
