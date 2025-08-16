@@ -132,7 +132,7 @@ class ScrapingStatus:
 class LinkedInScraper:
     """Comprehensive LinkedIn scraper for both profiles and jobs"""
     
-    def __init__(self, email: str = None, password: str = None, headless: bool = True):
+    def __init__(self, email: str = None, password: str = None, headless: bool = False):
         self.email = email or os.getenv('LINKEDIN_EMAIL')
         self.password = password or os.getenv('LINKEDIN_PASSWORD')
         self.headless = headless
@@ -153,27 +153,42 @@ class LinkedInScraper:
         ]
     
     def setup_driver(self):
-        """Setup Chrome driver with anti-detection measures"""
-        options = Options()
-        
-        if self.headless:
-            options.add_argument("--headless")
-            
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
-        options.add_argument("--disable-blink-features=AutomationControlled")
-        options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        options.add_experimental_option('useAutomationExtension', False)
-        options.add_argument("--window-size=1920,1080")
-        options.add_argument("user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36")
-        
+        """Setup Safari driver with anti-detection measures"""
         try:
-            self.driver = webdriver.Chrome(options=options)
+            # Use Safari WebDriver (built into macOS)
+            self.driver = webdriver.Safari()
+            
+            # Set window size
+            self.driver.set_window_size(1920, 1080)
+            
+            # Execute anti-detection script
             self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+            
             return self.driver
         except Exception as e:
-            logger.error(f"Failed to create Chrome driver: {e}")
-            raise WebDriverException(f"Failed to initialize web driver: {e}")
+            logger.error(f"Failed to create Safari driver: {e}")
+            # Fallback to Chrome if Safari fails
+            try:
+                logger.info("Falling back to Chrome driver...")
+                options = Options()
+                
+                if self.headless:
+                    options.add_argument("--headless")
+                    
+                options.add_argument("--no-sandbox")
+                options.add_argument("--disable-dev-shm-usage")
+                options.add_argument("--disable-blink-features=AutomationControlled")
+                options.add_experimental_option("excludeSwitches", ["enable-automation"])
+                options.add_experimental_option('useAutomationExtension', False)
+                options.add_argument("--window-size=1920,1080")
+                options.add_argument("user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36")
+                
+                self.driver = webdriver.Chrome(options=options)
+                self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+                return self.driver
+            except Exception as chrome_error:
+                logger.error(f"Failed to create Chrome driver: {chrome_error}")
+                raise WebDriverException(f"Failed to initialize web driver: {e}")
     
     def login_to_linkedin(self):
         """Login to LinkedIn"""
@@ -561,7 +576,7 @@ class LinkedInScraper:
 # Example usage functions
 def scrape_profiles(search_query: str, max_profiles: int = 10, target_skills: List[str] = None):
     """Scrape LinkedIn profiles based on search query"""
-    scraper = LinkedInScraper(headless=True)
+    scraper = LinkedInScraper(headless=False)
     
     try:
         scraper.setup_driver()
@@ -579,7 +594,7 @@ def scrape_profiles(search_query: str, max_profiles: int = 10, target_skills: Li
 
 def search_jobs(skills: List[str], location: str = "", limit: int = 10):
     """Search for jobs on LinkedIn"""
-    scraper = LinkedInScraper(headless=True)
+    scraper = LinkedInScraper(headless=False)
     
     try:
         request = JobSearchRequest(
